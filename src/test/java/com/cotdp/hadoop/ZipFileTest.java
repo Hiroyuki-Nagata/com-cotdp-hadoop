@@ -40,27 +40,27 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
- * 
+ *
  */
 public class ZipFileTest
     extends TestCase
 {
     private static final Log LOG = LogFactory.getLog(ZipFileTest.class);
-    
+
     /** Generate a working directory based on the Class name */
     Path workingPath = new Path("/tmp/" + this.getClass().getName());
-    
+
     /** Input files are loaded into here */
     Path inputPath = new Path(workingPath + "/Input");
-    
+
     /** Default configuration */
     Configuration conf = new Configuration();
-    
+
     /** Used to prevent setUp() re-initialising more than once */
     private static boolean isInitialised = false;
 
     /**
-     * Standard JUnit stuff 
+     * Standard JUnit stuff
      * @param testName
      */
     public ZipFileTest( String testName )
@@ -76,7 +76,7 @@ public class ZipFileTest
     {
         return new TestSuite( ZipFileTest.class );
     }
-    
+
     /**
      * Prepare the FileSystem and copy test files
      */
@@ -88,14 +88,14 @@ public class ZipFileTest
         if ( isInitialised == false )
         {
             LOG.info( "setUp() called, preparing FileSystem for tests" );
-            
-            // 
+
+            //
             FileSystem fs = FileSystem.get(conf);
-            
+
             // Delete our working directory if it already exists
             LOG.info( "   ... Deleting " + workingPath.toString() );
             fs.delete(workingPath, true);
-            
+
             // Copy the test files
             LOG.info( "   ... Copying files" );
             fs.mkdirs(inputPath);
@@ -107,15 +107,15 @@ public class ZipFileTest
             copyFile(fs, "encrypted.zip");
             copyFile(fs, "corrupt.zip");
             fs.close();
-            
+
             //
             isInitialised = true;
         }
-        
+
         // Reset ZipFileInputFormat leniency (false)
         ZipFileInputFormat.setLenient( false );
     }
-    
+
     /**
      * This Mapper class checks the filename ends with the .txt extension, cleans
      * the text and then applies the simple WordCount algorithm.
@@ -134,15 +134,15 @@ public class ZipFileTest
             // e.g. "subdir1/subsubdir2/Ulysses-18.txt"
             String filename = key.toString();
             LOG.info( "map: " + filename );
-            
+
             // We only want to process .txt files
             if ( filename.endsWith(".txt") == false )
                 return;
-            
-            // Prepare the content 
+
+            // Prepare the content
             String content = new String( value.getBytes(), "UTF-8" );
             content = content.replaceAll( "[^A-Za-z \n]", "" ).toLowerCase();
-            
+
             // Tokenize the content
             StringTokenizer tokenizer = new StringTokenizer( content );
             while ( tokenizer.hasMoreTokens() )
@@ -152,7 +152,7 @@ public class ZipFileTest
             }
         }
     }
-    
+
     /**
      * Reducer for the ZipFile test, identical to the standard WordCount example
      */
@@ -173,56 +173,56 @@ public class ZipFileTest
 
     /**
      * This test operates on a single file
-     * 
+     *
      * Expected result: success
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testSingle()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testSingle()                    ==" );
         LOG.info( "============================================================" );
-        
+
         // Standard stuff
         Job job = new Job(conf);
         job.setJobName(this.getClass().getSimpleName());
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setInputPaths(job, new Path(inputPath, "zip-01.zip"));
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_Single"));
-        
+
         //
         assertTrue( job.waitForCompletion(true) );
     }
 
     /**
      * This test operates on a Path containing files that will cause the Job to fail
-     * 
+     *
      * Expected result: failure
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testMultiple()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testMultiple()                  ==" );
@@ -234,37 +234,37 @@ public class ZipFileTest
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setInputPaths(job, inputPath);
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_Multiple"));
-        
+
         //
         assertFalse( job.waitForCompletion(true) );
     }
-    
+
 
     /**
      * This test is identical to testMultiple() however the ZipFileInputFormat is set to
      * be lenient, errors that cause testMultiple() to fail will be quietly ignored here.
-     * 
+     *
      * Expected result: success
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testMultipleLenient()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testMultipleLenient()           ==" );
@@ -276,36 +276,36 @@ public class ZipFileTest
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setLenient( true );
         ZipFileInputFormat.setInputPaths(job, inputPath);
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_MultipleLenient"));
-        
+
         //
         assertTrue( job.waitForCompletion(true) );
     }
-    
+
     /**
      * ZipInputStream doesn't support encrypted entries thus this will fail.
-     * 
+     *
      * Expected result: failure
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testEncryptedZip()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testEncryptedZip()              ==" );
@@ -317,153 +317,153 @@ public class ZipFileTest
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setInputPaths(job, new Path(inputPath, "encrypted.zip"));
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_Encrypted"));
-        
+
         //
         assertFalse( job.waitForCompletion(true) );
     }
 
-    
+
     /**
      * This test explicitly tries to read a file containing random noise as a ZIP file,
      * the expected result is a quiet failure. The Job shouldn't fail if non-ZIP data is
      * encountered.
-     * 
+     *
      * Expected result: (quiet) failure
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testNonZipData()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testNonZipData()                ==" );
         LOG.info( "============================================================" );
-        
+
         // Standard stuff
         Job job = new Job(conf);
         job.setJobName(this.getClass().getSimpleName());
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setInputPaths(job, new Path(inputPath, "random.dat"));
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_NonZipData"));
-        
+
         //
         assertTrue( job.waitForCompletion(true) );
     }
-    
+
     /**
      * This test refers to a corrupt (truncated) ZIP file, upon reaching the corruption
      * the Job will fail and no output will be written through the Reducer.
-     * 
+     *
      * Expected result: failure
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testCorruptZip()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testCorruptZip()                ==" );
         LOG.info( "============================================================" );
-        
+
         // Standard stuff
         Job job = new Job(conf);
         job.setJobName(this.getClass().getSimpleName());
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setInputPaths(job, new Path(inputPath, "corrupt.zip"));
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_Corrupt"));
-        
+
         //
         assertFalse( job.waitForCompletion(true) );
     }
-    
+
     /**
      * This test refers to a corrupt (truncated) ZIP file, upon reaching the corruption
      * the Mapper will ignore the corrupt entry and close the ZIP file. All previous
-     * output will be treated as normal and passed through the Reducer. 
-     * 
+     * output will be treated as normal and passed through the Reducer.
+     *
      * Expected result: success
-     * 
-     * @throws IOException 
-     * @throws InterruptedException 
-     * @throws ClassNotFoundException 
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ClassNotFoundException
      */
     public void testCorruptZipLenient()
         throws IOException, ClassNotFoundException, InterruptedException
- 
+
     {
         LOG.info( "============================================================" );
         LOG.info( "==                Running testCorruptZipLenient()         ==" );
         LOG.info( "============================================================" );
-        
+
         // Standard stuff
         Job job = new Job(conf);
         job.setJobName(this.getClass().getSimpleName());
         job.setJarByClass(this.getClass());
         job.setMapperClass(MyMapper.class);
         job.setReducerClass(MyReducer.class);
-        
-        // 
+
+        //
         job.setInputFormatClass(ZipFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         // The output files will contain "Word [TAB] Count"
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
-        
+
         //
         ZipFileInputFormat.setLenient( true );
         ZipFileInputFormat.setInputPaths(job, new Path(inputPath, "corrupt.zip"));
         TextOutputFormat.setOutputPath(job, new Path(workingPath, "Output_CorruptLenient"));
-        
+
         //
         assertTrue( job.waitForCompletion(true) );
     }
-    
+
     /**
      * Simple utility function to copy files into HDFS
-     * 
+     *
      * @param fs
      * @param name
      * @throws IOException
@@ -478,5 +478,5 @@ public class ZipFileTest
         os.close();
         is.close();
     }
-    
+
 }

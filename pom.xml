@@ -7,14 +7,27 @@
 	<version>1.0-SNAPSHOT</version>
 	<name>com-cotdp-hadoop</name>
 	<url>http://cotdp.com/</url>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<hadoop.version>0.23.11</hadoop.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-core</artifactId>
-			<version>1.2.1</version>
+ 			<groupId>org.apache.hadoop</groupId>
+ 			<artifactId>hadoop-common</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
+		<dependency>
+ 			<groupId>org.apache.hadoop</groupId>
+ 			<artifactId>hadoop-mapreduce-client-core</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
+		<dependency>
+ 			<groupId>org.apache.hadoop</groupId>
+ 			<artifactId>hadoop-mapreduce-client-common</artifactId>
+			<version>${hadoop.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pig</groupId>
