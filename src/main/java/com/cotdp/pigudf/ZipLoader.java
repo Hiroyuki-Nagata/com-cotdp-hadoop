@@ -18,13 +18,10 @@ package com.cotdp.pigudf;
 
 import com.cotdp.hadoop.ZipFileInputFormat;
 import com.cotdp.hadoop.ZipFileRecordReader;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import org.apache.pig.builtin.PigStreaming;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -34,11 +31,11 @@ import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
 
-public class ZipLoad extends LoadFunc {
+public class ZipLoader extends LoadFunc {
 
     private TupleFactory tupleFactory = TupleFactory.getInstance();
     private ZipFileRecordReader reader;
-    private List<Object> cachedList;
+    private PigStreaming ps = new PigStreaming();
 
     @SuppressWarnings("rawtypes")
     @Override
@@ -56,12 +53,20 @@ public class ZipLoad extends LoadFunc {
     @Override
     public void prepareToRead(@SuppressWarnings("rawtypes") RecordReader reader, PigSplit split)
 	throws IOException {
-	this.reader     = (ZipFileRecordReader) reader;
-	this.cachedList = new ArrayList<Object>();
+	this.reader = (ZipFileRecordReader) reader;
     }
 
     @Override
     public Tuple getNext() throws IOException {
-	return null;
+	try {
+	    if (reader.nextKeyValue()) {
+		BytesWritable bc = reader.getCurrentValue();
+		return ps.deserialize(bc.getBytes());
+	    } else {
+		return null;
+	    }
+	} catch (InterruptedException e) {
+	    throw new IOException(e);
+	}
     }
 }
